@@ -365,9 +365,19 @@ func (s *TagScanner) addOrUpdateTracksInDB(
 			n := newTracks[i]
 			// Keep current annotations if the track is in the DB
 			if t, ok := currentTracks[n.Path]; ok {
+				if n.Annotations.Rating != -1 {
+					log.Info("Overwriting rating", "id", n.ID, "rating", n.Annotations.Rating)
+					t.Annotations.Rating = n.Annotations.Rating
+				}
 				n.Annotations = t.Annotations
 			}
 			err := s.ds.MediaFile(ctx).Put(&n)
+			if n.Annotations.Rating != -1 {
+				err := s.ds.MediaFile(ctx).SetRating(n.Annotations.Rating, n.ID)
+				if err != nil {
+					log.Warn("Failed to set rating", "file", n.Path)
+				}
+			}
 			if err != nil {
 				return 0, err
 			}

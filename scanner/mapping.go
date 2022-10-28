@@ -30,6 +30,11 @@ func newMediaFileMapper(rootFolder string, genres model.GenreRepository) *mediaF
 // TODO Move most of these mapping functions to setters in the model.MediaFile
 func (s mediaFileMapper) toMediaFile(md metadata.Tags) model.MediaFile {
 	mf := &model.MediaFile{}
+	if rating, found := md.Rating(); found {
+		mf.Annotations.Rating = rating
+	} else {
+		mf.Annotations.Rating = -1
+	}
 	mf.ID = s.trackID(md)
 	mf.Year, mf.Date, mf.OriginalYear, mf.OriginalDate, mf.ReleaseYear, mf.ReleaseDate = s.mapDates(md)
 	mf.Title = s.mapTrackTitle(md)

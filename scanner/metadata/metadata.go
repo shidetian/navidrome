@@ -140,6 +140,34 @@ func (t Tags) MbzAlbumComment() string {
 	return t.getFirstTagValue("musicbrainz_albumcomment", "musicbrainz album comment")
 }
 
+var ratingRegex = regexp.MustCompile(`rating=(?P<rating>\d+)`)
+
+func (t Tags) Rating() (int, bool) {
+	ratingValue := ""
+	ratingMax := 255.0
+
+	if rawRating := t.getFirstTagValue("popm"); len(rawRating) != 0 {
+		ratingMatch := ratingRegex.FindStringSubmatch(rawRating)
+
+		if len(ratingMatch) == 2 {
+			ratingValue = ratingMatch[1]
+		} else {
+			log.Warn("Error parsing rating from popm", "file", t.filePath, "rawRating", rawRating, "ratingMatched", ratingMatch, "length", len(ratingMatch))
+		}
+	}
+
+	if rawRating := t.getFirstTagValue("rating"); len(rawRating) != 0 {
+		ratingValue = rawRating
+		ratingMax = 100
+	}
+
+	if rawValue, err := strconv.ParseFloat(ratingValue, 32); err == nil {
+		return (int)(math.Round((5 * rawValue) / ratingMax)), true
+	}
+
+	return 0, false
+}
+
 // File properties
 
 func (t Tags) Duration() float32           { return float32(t.getFloat("duration")) }
