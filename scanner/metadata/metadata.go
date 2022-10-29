@@ -144,7 +144,8 @@ var ratingRegex = regexp.MustCompile(`rating=(?P<rating>\d+)`)
 
 func (t Tags) Rating() (int, bool) {
 	ratingValue := ""
-	ratingMax := 255.0
+	ratingFormat := Base2
+	maxValue := 255.0
 
 	if rawRating := t.getFirstTagValue("popm"); len(rawRating) != 0 {
 		ratingMatch := ratingRegex.FindStringSubmatch(rawRating)
@@ -158,14 +159,46 @@ func (t Tags) Rating() (int, bool) {
 
 	if rawRating := t.getFirstTagValue("rating"); len(rawRating) != 0 {
 		ratingValue = rawRating
-		ratingMax = 100
+		ratingFormat = Base10
+		maxValue = 100
 	}
 
 	if rawValue, err := strconv.ParseFloat(ratingValue, 32); err == nil {
-		return (int)(math.Round((5 * rawValue) / ratingMax)), true
+		return To5StarRating(RatingFormat(ratingFormat), rawValue, maxValue), true
 	}
 
 	return 0, false
+}
+
+type RatingFormat int
+
+const (
+	Base2 = iota
+	Base10
+)
+
+func To5StarRating(method RatingFormat, rawValue float64, maxValue float64) int {
+	// All half ratings are rounded up
+	switch method {
+	case Base2:
+		if rawValue > 196 {
+			return 5
+		} else if rawValue > 128 {
+			return 4
+		} else if rawValue > 64 {
+			return 3
+		} else if rawValue > 1 && rawValue != 13 { // MM uses 13 for 1/2 stars
+			return 2
+		} else if rawValue == 0 {
+			return 0
+		} else {
+			return 1
+		}
+	case Base10:
+		return (int)(math.Round(5.0 * rawValue / maxValue))
+	default:
+		return -1
+	}
 }
 
 // File properties
