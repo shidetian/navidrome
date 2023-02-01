@@ -157,14 +157,20 @@ func (t Tags) Rating() (int, bool) {
 		}
 	}
 
-	if rawRating := t.getFirstTagValue("rating"); len(rawRating) != 0 {
+	if rawRating := t.getFirstTagValue("rating", "rate"); len(rawRating) != 0 {
 		ratingValue = rawRating
 		ratingFormat = Base10
 		maxValue = 100
 	}
 
+	if len(ratingValue) == 0 {
+		return 0, false
+	}
+
 	if rawValue, err := strconv.ParseFloat(ratingValue, 32); err == nil {
 		return To5StarRating(RatingFormat(ratingFormat), rawValue, maxValue), true
+	} else {
+		log.Warn("Failed to parse rating", "file", t.filePath, "rawRating", ratingValue)
 	}
 
 	return 0, false
