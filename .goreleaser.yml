@@ -11,6 +11,7 @@ builds:
       - amd64
     flags:
       - -tags=netgo
+      - -buildvcs=false
     ldflags:
       - "-extldflags '-static -lz'"
       - -s -w -X github.com/navidrome/navidrome/consts.gitSha={{.ShortCommit}} -X github.com/navidrome/navidrome/consts.gitTag={{.Version}}
